@@ -1,6 +1,7 @@
 name: Auto Update
 on: 
-
+  schedule:
+    - cron: 0 4 * * * 
   workflow_dispatch:
 
 env:
