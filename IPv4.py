@@ -28,6 +28,7 @@ ip_list = [ip for ip in ip_list if ip.strip()]
 
 # 将数据写入txt文件
 with open("ip_list.txt", "w") as file:
+    file.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n")
     for ip in ip_list:
         file.write(ip + "\n")
 
