@@ -1,36 +1,43 @@
+import re
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
-import re
 
-# 发送HTTP请求并获取网页内容
+# 目标 URL
 url = "https://zh.wikiversity.org/wiki/%E9%98%B2%E7%81%AB%E9%95%BF%E5%9F%8E%E5%9F%9F%E5%90%8D%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%93%E5%AD%98%E6%B1%A1%E6%9F%93IP%E5%88%97%E8%A1%A8"
-response = requests.get(url)
-html_content = response.text
 
-# 使用BeautifulSoup解析HTML
-soup = BeautifulSoup(html_content, "html.parser")
+headers = {"User-Agent": "Mozilla/5.0"}
+response = requests.get(url, headers=headers)
+response.raise_for_status()
 
-# 找到目标内容所在的div标签
-div_content = soup.find("div", class_="mw-highlight mw-highlight-lang-text mw-content-ltr mw-highlight-lines")
+soup = BeautifulSoup(response.text, "html.parser")
 
-# 找到div标签下的pre标签
-pre_tags = div_content.find_all("pre")
+# 找到所有 <pre> 标签
+pre_tags = soup.find_all("pre")
 
-# 提取并处理数据
-ip_list = []
-for pre in pre_tags:
-    # 使用正则表达式匹配符合形式的数据
-    ips = re.findall(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", pre.text)
-    ip_list.extend(ips)
+if not pre_tags:
+    print("未找到任何 <pre> 标签")
+else:
+    ipv4_pattern = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
+    ipv6_pattern = re.compile(r'\b(?:[0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}\b')
 
-# 去除空白行
-ip_list = [ip for ip in ip_list if ip.strip()]
+    ipv4_list = []
+    ipv6_list = []
 
-# 将数据写入txt文件
-with open("ip_list.txt", "w") as file:
-    file.write("# " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n")
-    for ip in ip_list:
-        file.write(ip + "\n")
+    # 遍历每个 <pre>，按原顺序提取 IP
+    for pre in pre_tags:
+        text = pre.get_text()
+        ipv4_list.extend(ipv4_pattern.findall(text))
+        ipv6_list.extend(ipv6_pattern.findall(text))
 
-print("数据已成功写入ip_list.txt文件！")
+    # 去重且保持顺序
+    ipv4_list = list(dict.fromkeys(ipv4_list))
+    ipv6_list = list(dict.fromkeys(ipv6_list))
+
+    # 写入文件：先 IPv4，再 IPv6
+    with open("ip_list.txt", "w", encoding="utf-8") as f:
+        for ip in ipv4_list:
+            f.write(ip + "\n")
+        for ip in ipv6_list:
+            f.write(ip + "\n")
+
+    print(f"已将 {len(ipv4_list)} 个 IPv4 和 {len(ipv6_list)} 个 IPv6 写入 ip_list.txt（已去重）")
