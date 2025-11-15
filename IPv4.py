@@ -1,6 +1,7 @@
 import re
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 # 目标 URL
 url = "https://zh.wikiversity.org/wiki/%E9%98%B2%E7%81%AB%E9%95%BF%E5%9F%8E%E5%9F%9F%E5%90%8D%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%93%E5%AD%98%E6%B1%A1%E6%9F%93IP%E5%88%97%E8%A1%A8"
@@ -35,9 +36,10 @@ else:
 
     # 写入文件：先 IPv4，再 IPv6
     with open("ip_list.txt", "w", encoding="utf-8") as f:
+        f.write(f"# {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         for ip in ipv4_list:
             f.write(ip + "\n")
         for ip in ipv6_list:
             f.write(ip + "\n")
-
+            
     print(f"已将 {len(ipv4_list)} 个 IPv4 和 {len(ipv6_list)} 个 IPv6 写入 ip_list.txt（已去重）")
